@@ -1,17 +1,28 @@
 const http = require('http');
 const url = require('url');
-const querystring = require('querystring');
 
 const dictionary = {};
 let totalRequests = 0;
 
 const server = http.createServer((req, res) => {
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, requestNumber'); // Add 'requestNumber' to the allowed headers
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+    }
+
     const parsedUrl = url.parse(req.url, true);
     const pathname = parsedUrl.pathname;
 
-    if (req.method === 'POST' && pathname === '/api/definitions') {
+    if (req.method === 'POST' && pathname === '/api/definitions/') {
         handlePostRequest(req, res);
-    } else if (req.method === 'GET' && pathname === '/api/definitions') {
+    } else if (req.method === 'GET' && pathname === '/api/definitions/') {
         handleGetRequest(parsedUrl.query, res);
     } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -25,7 +36,7 @@ function handlePostRequest(req, res) {
     let data = '';
 
     req.on('data', (chunk) => {
-        data += chunk;
+        data += chunk.toString();
     });
 
     req.on('end', () => {
@@ -67,16 +78,22 @@ function handleGetRequest(query, res) {
     const definition = dictionary[word];
 
     if (!definition) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
+        res.writeHead(404, {
+            'Content-Type': 'application/json',
+            'Access-Control-Expose-Headers': 'requestNumber' // Add this line to expose the 'requestNumber' header
+        });
+        res.end(JSON.stringify({
             error: `Request# ${totalRequests}, Word '${word}' not found!`,
             requestNumber: totalRequests
         }));
         return;
     }
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
+    res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Expose-Headers': 'requestNumber' // Add this line to expose the 'requestNumber' header
+    });
+    res.end(JSON.stringify({
         word,
         definition,
         requestNumber: totalRequests
@@ -87,3 +104,4 @@ const port = 8080;
 server.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
+
