@@ -9,6 +9,7 @@ const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, requestNumber'); // Add 'requestNumber' to the allowed headers
+    res.setHeader('Access-Control-Allow-Credentials', 'true'); // Allow credentials
 
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
